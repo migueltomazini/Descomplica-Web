@@ -27,22 +27,26 @@ import textwrap
 from IPython.display import display, Markdown
 import warnings
 import gradio as gr
+from dotenv import load_dotenv # << NOVA LINHA: Importar load_dotenv
 
-warnings.filterwarnings("ignore")
+# Carrega variáveis de ambiente do arquivo .env (se existir)
+load_dotenv()
 
-try:
-    # Tenta obter a API Key do userdata do Colab
-    os.environ["GOOGLE_API_KEY"] = userdata.get('GOOGLE_API_KEY')
-except Exception as e:
-    # Mensagem para o caso de não estar no Colab ou falha no userdata
-    print(f"Aviso: Não foi possível obter GOOGLE_API_KEY automaticamente. Erro: {e}")
-    print("Se não estiver usando o Google Colab, certifique-se de que a variável de ambiente GOOGLE_API_KEY está configurada.")
+# Tenta obter a API Key do ambiente (que agora pode vir do .env ou do sistema)
+GOOGLE_API_KEY_FROM_ENV = os.getenv("GOOGLE_API_KEY")
 
-# Verificação crítica da API Key
-if not os.environ.get("GOOGLE_API_KEY"):
-    raise ValueError("API Key do Google não encontrada. "
-                     "No Google Colab, configure-a em 'Segredos'. "
-                     "Em outros ambientes, defina a variável de ambiente GOOGLE_API_KEY.")
+if not GOOGLE_API_KEY_FROM_ENV:
+    raise ValueError("A variável de ambiente GOOGLE_API_KEY não foi encontrada. "
+                     "Certifique-se de que ela está definida no seu sistema ou em um arquivo .env na raiz do projeto.")
+else:
+    # Se encontrada, podemos definir explicitamente para o os.environ se quisermos,
+    # ou simplesmente usar a variável GOOGLE_API_KEY_FROM_ENV.
+    # A biblioteca google-genai geralmente procura por os.environ["GOOGLE_API_KEY"]
+    # mas também pode funcionar se a variável de ambiente já estiver carregada.
+    # Para garantir compatibilidade com bibliotecas que leem diretamente de os.environ:
+    os.environ["GOOGLE_API_KEY"] = GOOGLE_API_KEY_FROM_ENV
+    print("GOOGLE_API_KEY carregada do ambiente.")
+
 
 client = genai.Client()
 MODEL_ID = "gemini-2.0-flash"
